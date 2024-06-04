@@ -1,0 +1,12 @@
+{
+  "name": "chiabackend",
+  "version": "1.0.0",
+  "description": "learning and developing backend",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "author": "TheinSoe",
+  "license": "ISC"
+}
