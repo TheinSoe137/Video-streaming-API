@@ -1,33 +1,37 @@
-import ImageKit from "imagekit-javascript";
+// import ImageKit from "imagekit-javascript";
+import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import dotenv from "dotenv";
+dotenv.config({
+  path: "./env",
+});
+// const imagekit = new ImageKit({
+//   publicKey: process.env.CLOUD_PUBLIC_KEY,
+//   privateKey: process.env.CLOUD_PRIVATE_KEY,
+//   urlEndpoint: process.env.CLOUD_URL_ENDPOINT,
+// });
 
-var imagekit = new ImageKit({
-  publicKey: process.env.CLOUD_PUBLIC_KEY,
-  urlEndpoint: process.env.CLOUD_URL_ENDPOINT,
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET_KEY,
 });
 
 const uploadOnCloud = async (localFilePath) => {
   try {
-    if (!localFilePath) return console.log("Local File path not given");
-    const response = await imagekit.upload(
-      {
-        file: localFilePath,
-      },
-      function (err, result) {
-        console.log(arguments);
-
-        console.log(
-          imagekit.url({
-            src: result.url,
-          })
-        );
-      }
-    );
-    console.log("File is uploaded on cloud", response.result);
+    if (!localFilePath) return null;
+    //upload the file on cloudinary
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto",
+    });
+    // file has been uploaded successfull
+    console.log("file is uploaded on cloudinary ", response.url);
+    fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath);
-    return null;
+    // console.log(error, "error in uploding file on cloud"); // remove the locally saved temporary file as the upload operation got failed
+    return error;
   }
 };
 

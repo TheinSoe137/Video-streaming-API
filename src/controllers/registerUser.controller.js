@@ -6,7 +6,6 @@ import { ApiResponse } from "../utils/apiResponse.js";
 const registerUser = asyncHandler(async (req, res) => {
   //user data from frontend
   const { fullname, email, username, password } = req.body;
-  console.log(email);
 
   //validation of user data !empty
   if (
@@ -17,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
   //check if user already exist (username or email or both)
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
   if (existedUser) {
@@ -31,21 +30,20 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
   }
-
   // upload them to cloud, avatar check
   const avatar = await uploadOnCloud(avatarLocalPath);
-  const coverImage = await uploadOnCloud(coverImageLocalPath);
+  const coverImageUrl = await uploadOnCloud(coverImageLocalPath);
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
   }
   //create user object - create entry in db
   const user = await User.create({
     fullname,
-    avatar: avatar.result,
-    coverImagae: coverImage?.result || "",
+    avatar: avatar.url,
+    coverImage: coverImageUrl?.url || "",
     email,
     password,
-    username: username.toLowerCase(),
+    username: username,
   });
 
   //remove psw and refresh token from field
