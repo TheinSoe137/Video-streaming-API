@@ -3,6 +3,19 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloud } from "../utils/fileUpload.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+
+const generateAccessTokenandRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const userAccessTk = user.generateAccessToken();
+    const userRefreshTk = user.generateRefershToken();
+    user.refreshToken = userRefreshTk;
+    await user.save({ validateBeforeSave: false });
+    return { userAccessTk, userRefreshTk };
+  } catch (error) {
+    throw new ApiError(501, "Error in Server, generating Token");
+  }
+};
 const registerUser = asyncHandler(async (req, res) => {
   //user data from frontend
   const { fullname, email, username, password } = req.body;
@@ -62,4 +75,51 @@ const registerUser = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
-export { registerUser };
+
+const loginUser = asyncHandler(async (req, res) => {
+  //req body -> data
+  //get username or email
+  //find the user in db
+  //pw check
+  //create access, refresh tokens
+  //send them to user through cookies
+  const { email, username, password } = req.body;
+  if (!username || !email) {
+    throw new ApiError(400, "Please enter username or email to login");
+  }
+  const loginUser = await User.findOne({ $or: [{ username }, { email }] });
+  if (!loginUser) throw new ApiError(404, "You have to register first");
+
+  const correctPassword = await loginUser.isPasswordCorrect(password);
+  if (!correctPassword) throw new ApiError(401, "Password incorrect");
+
+  const { userAccessTk, userRefreshTk } =
+    await generateAccessTokenandRefreshToken(loginUser._id);
+
+  const loggedInUser = await User.findById(loginUser._id).select(
+    "-password -refreshToken"
+  );
+
+  const options = {
+    httpOnly: ture,
+    secure: ture,
+  };
+
+  return reshote
+    .status(200)
+    .cookie("AccessToken", userAccessTk, options)
+    .cookie("Refresh token", userRefreshTk, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          userAccessTk,
+          userRefreshTk,
+        },
+        "User is logged in Successfully"
+      )
+    );
+});
+
+export { registerUser, loginUser };
