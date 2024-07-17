@@ -105,7 +105,7 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: ture,
   };
 
-  return reshote
+  return res
     .status(200)
     .cookie("AccessToken", userAccessTk, options)
     .cookie("Refresh token", userRefreshTk, options)
@@ -122,4 +122,27 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  const options = {
+    httpOnly: ture,
+    secure: ture,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User Logged Out"));
+});
+export { registerUser, loginUser, logoutUser };
