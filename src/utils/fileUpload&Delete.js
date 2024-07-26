@@ -2,6 +2,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import dotenv from "dotenv";
+
 dotenv.config({
   path: "./env",
 });
@@ -35,8 +36,28 @@ const uploadOnCloud = async (localFilePath) => {
   }
 };
 
-const deleteFromCloud = async (public_id) => {
-  cloudinary.uploader.destroy(public_id).then((result) => console.log(result));
+const deleteFromCloud = async (public_id, resource_type = "image") => {
+  if (resource_type === "video") {
+    try {
+      const result = await cloudinary.uploader.destroy(public_id, {
+        resource_type: "video",
+      });
+      console.log(" Video Deleted from cloud");
+      return result;
+    } catch (error) {
+      return error;
+    }
+  } else {
+    try {
+      const result = await cloudinary.uploader.destroy(public_id, {
+        resource_type: "image",
+      });
+      console.log("Image Deleted from cloud");
+      return result;
+    } catch (error) {
+      return error;
+    }
+  }
 };
 
 export { uploadOnCloud, deleteFromCloud };
