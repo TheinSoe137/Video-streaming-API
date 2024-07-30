@@ -12,7 +12,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const comments = await Comment.aggregatePaginate(
       Comment.aggregate([
         {
-          $match: videoId,
+          $match: { $expr: { videoId } },
         },
         {
           $lookup: {
@@ -50,20 +50,19 @@ const getVideoComments = asyncHandler(async (req, res) => {
   }
 });
 const addComment = asyncHandler(async (req, res) => {
-  // TODO: add a comment to a video
-  const videoId = req.param;
-  const content = req.body;
+  const videoId = req.param.videoId;
+  const { content } = req.body;
   const userId = req.user._id;
 
-  if (!addComment || addComment === " ")
+  if (!content || content.trim() === "")
     throw new ApiError(400, "Please add a comment");
   try {
     const commentData = await Comment.create({
       content,
       video: videoId,
       owner: userId,
-    }).save();
-    console.log(commentData);
+    });
+
     return res
       .status(201)
       .json(new ApiResponse(201, commentData, "Comment added successfully"));
@@ -73,11 +72,44 @@ const addComment = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
-  // TODO: update a comment
+  const { editComment } = req.body;
+  const commentId = req.params.commentId;
+  const userId = req.user._id; // todo match owner to verify comment edit
+  if (!editComment || editComment.trim() === "") {
+    throw new ApiError(400, "Edit comment not found");
+  }
+
+  if (editComment === commentId.content) {
+    throw new ApiError(400, "Edit comment not found");
+  }
+  try {
+    const editedComment = await Comment.findByIdAndUpdate(
+      commentId,
+      {
+        $set: {
+          content: editComment,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, editedComment, "Comment edit successfully"));
+  } catch (error) {
+    throw new ApiError(500, error.message, "Server Error in updating Comment ");
+  }
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
-  // TODO: delete a comment
+  const commentId = req.params.commentId;
+  try {
+    const deleteComment = await Comment.findByIdAndDelete(commentId);
+    return res.status(200).json(200, deleteComment, "Comment Deleted");
+  } catch (error) {
+    throw new ApiError(500, error.message, "Server error in deleting comment");
+  }
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };
