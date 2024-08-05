@@ -12,52 +12,7 @@ import { User } from "../models/user.model.js";
 //toggle publish status
 //get current video
 //get all videos
-// const getAllVideos = asyncHandler(async (req, res) => {
-//   try {
-//     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-//     const matchQuery = {};
-//     if (query) {
-//       matchQuery.$or = [
-//         { title: { $regex: query, $options: "i" } },
-//         { description: { $regex: query, $options: "i" } },
-//       ];
-//     }
-//     if (userId) {
-//       matchQuery.owner = new mongoose.Types.ObjectId(userId);
-//     }
-//     const videos = await Video.aggregate([
-//       {
-//         $match: matchQuery,
-//       },
-//       {
-//         $lookup: {
-//           from: "users",
-//           localField: "owner",
-//           foreignField: "_id",
-//           as: "owner",
-//         },
-//       },
-//       {
-//         $addFields: {
-//           owner: { $arrayElemAt: ["$owner", 0] },
-//         },
-//       },
-//       {
-//         $sort: { [sortBy]: sortType === "asc" ? 1 : -1 },
-//       },
-//     ]);
-//     const options = {
-//       page,
-//       limit,
-//     };
-//     const result = await Video.aggregatePaginate(videos, options);
-//     return res
-//       .status(200)
-//       .json(new ApiResponse(200, result, "All Videos fetched successfully"));
-//   } catch (error) {
-//     throw new ApiError(500, error.message, "Cannot Fetch Videos");
-//   }
-// });
+
 const getAllVideos = asyncHandler(async (req, res) => {
   try {
     const {
