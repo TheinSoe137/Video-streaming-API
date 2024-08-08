@@ -2,9 +2,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { Playlist } from "../models/playlist.model.js";
+import mongoose from "mongoose";
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
+  const userId = req.user._id;
   if (!(name && description))
     throw new ApiError(
       400,
@@ -15,6 +17,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
     const playlist = await Playlist.create({
       name,
       description,
+      owner: userId,
     });
     return res
       .status(201)
@@ -30,7 +33,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     const userPlaylists = await Playlist.aggregate([
       {
         $match: {
-          owner: userId,
+          owner: new mongoose.Types.ObjectId(userId),
         },
       },
       {
@@ -138,9 +141,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   try {
     await Playlist.findByIdAndDelete(playlistId);
-    return res
-      .status(200)
-      .json(new ApiResponse(200, addVideo, "Playlist Deleted"));
+    return res.status(200).json(new ApiResponse(200, null, "Playlist Deleted"));
   } catch (error) {
     throw new ApiError(500, error.message, "Failed to delete the Playlist ");
   }
